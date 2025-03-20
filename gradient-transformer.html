@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradient Image Transformer</title>
+    <style>
+        :root {
+            --primary-dark: #240046;
+            --primary-light: #e0aaff;
+            --accent-1: #ff6b6b;
+            --accent-2: #48cae4;
+            --dark: #10002b;
+            --light: #f8f9fa;
+            --success: #06d6a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #ff3366, #ba24f0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .upload-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto;
+            padding: 3rem;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            max-width: 500px;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-1);
+            background-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-3px);
+        }
+
+        .upload-zone.active {
+            border-color: var(--success);
+            background-color: rgba(6, 214, 160, 0.1);
+        }
+
+        .upload-zone p {
+            margin: 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        .upload-icon {
+            width: 60px;
+            height: 60px;
+            stroke: rgba(255, 255, 255, 0.7);
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone:hover .upload-icon {
+            stroke: var(--accent-1);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .transformation-controls {
+            margin: 2rem auto;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .transformation-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 300px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-group h3 {
+            margin-bottom: 1rem;
+            color: var(--accent-2);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .slider-control {
+            margin: 1.5rem 0;
+        }
+
+        .slider-control label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .slider-control label span:last-child {
+            font-weight: 600;
+            color: var(--accent-1);
+        }
+
+        .slider-control input {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+
+        .slider-control input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider-control input::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .gradient-selector {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .gradient-option {
+            flex: 1;
+            min-height: 80px;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .gradient-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .gradient-option.selected {
+            outline: 3px solid var(--accent-1);
+        }
+
+        .magenta-purple {
+            background: linear-gradient(135deg, #ff3366, #ba24f0);
+        }
+
+        .yellow-green {
+            background: linear-gradient(135deg, #ffd60a, #016b39);
+        }
+
+        .gradient-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.3rem;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .gradient-option:hover .gradient-name {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .image-comparison {
+            display: flex;
+            margin: 2rem auto;
+            max-width: 1000px;
+            height: 500px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .image-comparison.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .image-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-container:first-child {
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .image-label {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 0.3rem 0.8rem;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            z-index: 10;
+        }
+
+        .original .image-label {
+            background-color: rgba(72, 202, 228, 0.8);
+            color: var(--dark);
+        }
+
+        .transformed .image-label {
+            background-color: rgba(255, 107, 107, 0.8);
+            color: var(--dark);
+        }
+
+        .image-display {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            height: 100%;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .placeholder svg {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 1rem;
+            stroke: rgba(255, 255, 255, 0.5);
+        }
+
+        .download-btn {
+            display: block;
+            margin: 1rem auto;
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, var(--accent-1), #ff9e7d);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .download-btn.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 1.5rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        /* Visual feedback and animations */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        /* Neural aesthetic patterns - subtle animated background */
+        .neural-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255, 51, 102, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(186, 36, 240, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 75% 25%, rgba(72, 202, 228, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 25% 75%, rgba(255, 214, 10, 0.3) 0%, transparent 50%);
+            filter: blur(60px);
+            animation: patternShift 30s infinite alternate ease-in-out;
+        }
+
+        @keyframes patternShift {
+            0% { 
+                background-position: 0% 0%;
+                filter: blur(60px) hue-rotate(0deg);
+            }
+            100% { 
+                background-position: 100% 100%;
+                filter: blur(60px) hue-rotate(90deg);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .image-comparison {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .image-container {
+                height: 300px;
+            }
+
+            .image-container:first-child {
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="neural-pattern"></div>
+    <div class="container">
+        <header>
+            <h1>Gradient Transformer</h1>
+            <p class="subtitle">Upload an image to apply stunning gradient overlays</p>
+        </header>
+
+        <div class="upload-zone" id="uploadZone">
+            <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p>Drop your image here or click to browse</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="transformation-controls" id="transformationControls">
+            <div class="control-group">
+                <h3>
+                    <svg class="control-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                    Choose Gradient
+                </h3>
+                <div class="gradient-selector">
+                    <div class="gradient-option magenta-purple selected" data-gradient="magenta-purple">
+                        <div class="gradient-name">Magenta-Purple</div>
+                    </div>
+                    <div class="gradient-option yellow-green" data-gradient="yellow-green">
+                        <div class="gradient-name">Yellow-Green</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>
+                    <svg class="control-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                    Adjustment Controls
+                </h3>
+                <div class="slider-control">
+                    <label>
+                        <span>Opacity</span>
+                        <span id="opacityValue">50%</span>
+                    </label>
+                    <input type="range" id="opacitySlider" min="0" max="100" value="50">
+                </div>
+                <div class="slider-control">
+                    <label>
+                        <span>Blend Mode</span>
+                        <span id="blendModeValue">Overlay</span>
+                    </label>
+                    <input type="range" id="blendModeSlider" min="0" max="5" value="2">
+                </div>
+                <div class="slider-control">
+                    <label>
+                        <span>Gradient Angle</span>
+                        <span id="angleValue">135°</span>
+                    </label>
+                    <input type="range" id="angleSlider" min="0" max="360" value="135">
+                </div>
+            </div>
+        </div>
+
+        <div class="image-comparison" id="imageComparison">
+            <div class="image-container original">
+                <span class="image-label">Original</span>
+                <div class="placeholder" id="originalPlaceholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p>Original image will appear here</p>
+                </div>
+                <img id="originalImage" class="image-display" style="display: none;">
+            </div>
+            <div class="image-container transformed">
+                <span class="image-label">Transformed</span>
+                <div class="placeholder" id="transformedPlaceholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" />
+                    </svg>
+                    <p>Transformed image will appear here</p>
+                </div>
+                <canvas id="transformedCanvas" style="display: none;"></canvas>
+            </div>
+        </div>
+
+        <button class="download-btn" id="downloadBtn">Download Transformed Image</button>
+    </div>
+
+    <footer>
+        <p>Created with ♥ and neural aesthetics • <span class="pulse">Interact to discover the magic</span></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const fileInput = document.getElementById('fileInput');
+            const uploadZone = document.getElementById('uploadZone');
+            const originalImage = document.getElementById('originalImage');
+            const transformedCanvas = document.getElementById('transformedCanvas');
+            const originalPlaceholder = document.getElementById('originalPlaceholder');
+            const transformedPlaceholder = document.getElementById('transformedPlaceholder');
+            const opacitySlider = document.getElementById('opacitySlider');
+            const opacityValue = document.getElementById('opacityValue');
+            const blendModeSlider = document.getElementById('blendModeSlider');
+            const blendModeValue = document.getElementById('blendModeValue');
+            const angleSlider = document.getElementById('angleSlider');
+            const angleValue = document.getElementById('angleValue');
+            const gradientOptions = document.querySelectorAll('.gradient-option');
+            const transformationControls = document.getElementById('transformationControls');
+            const imageComparison = document.getElementById('imageComparison');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            // Variables
+            let currentGradient = 'magenta-purple';
+            let opacity = 50;
+            let blendModeIndex = 2;
+            let angle = 135;
+            const blendModes = ['normal', 'multiply', 'overlay', 'screen', 'color', 'luminosity'];
+
+            // Setup canvas context
+            const ctx = transformedCanvas.getContext('2d');
+
+            // Event Listeners
+            uploadZone.addEventListener('click', () => fileInput.click());
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('active');
+            });
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('active');
+            });
+            uploadZone.addEventListener('drop', handleImageDrop);
+            fileInput.addEventListener('change', handleImageSelect);
+
+            // Sliders
+            opacitySlider.addEventListener('input', function() {
+                opacity = parseInt(this.value);
+                opacityValue.textContent = opacity + '%';
+                applyTransformation();
+            });
+
+            blendModeSlider.addEventListener('input', function() {
+                blendModeIndex = parseInt(this.value);
+                blendModeValue.textContent = capitalize(blendModes[blendModeIndex]);
+                applyTransformation();
+            });
+
+            angleSlider.addEventListener('input', function() {
+                angle = parseInt(this.value);
+                angleValue.textContent = angle + '°';
+                applyTransformation();
+            });
+
+            // Gradient selection
+            gradientOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    gradientOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    currentGradient = this.dataset.gradient;
+                    applyTransformation();
+                });
+            });
+
+            // Download button
+            downloadBtn.addEventListener('click', downloadImage);
+
+            // Functions
+            function handleImageDrop(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('active');
+                
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    loadImageFromFile(e.dataTransfer.files[0]);
+                }
+            }
+
+            function handleImageSelect(e) {
+                if (e.target.files && e.target.files[0]) {
+                    loadImageFromFile(e.target.files[0]);
+                    uploadZone.classList.add('active');
+                }
+            }
+
+            function loadImageFromFile(file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    originalImage.onload = function() {
+                        // Show image and canvas, hide placeholders
+                        originalPlaceholder.style.display = 'none';
+                        transformedPlaceholder.style.display = 'none';
+                        originalImage.style.display = 'block';
+                        transformedCanvas.style.display = 'block';
+                        
+                        // Show controls and comparison
+                        transformationControls.classList.add('active');
+                        imageComparison.classList.add('active');
+                        downloadBtn.classList.add('active');
+                        
+                        // Setup canvas dimensions
+                        setupCanvas();
+                        
+                        // Apply initial transformation
+                        applyTransformation();
+                    };
+                    originalImage.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+
+            function setupCanvas() {
+                // Set canvas dimensions to match the image
+                transformedCanvas.width = originalImage.naturalWidth;
+                transformedCanvas.height = originalImage.naturalHeight;
+            }
+
+            function applyTransformation() {
+                if (!originalImage.complete) return;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, transformedCanvas.width, transformedCanvas.height);
+                
+                // Draw original image
+                ctx.drawImage(originalImage, 0, 0, transformedCanvas.width, transformedCanvas.height);
+                
+                // Apply blend mode
+                ctx.globalCompositeOperation = blendModes[blendModeIndex];
+                
+                // Create gradient
+                const gradient = createGradient();
+                
+                // Apply gradient with opacity
+                ctx.globalAlpha = opacity / 100;
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, transformedCanvas.width, transformedCanvas.height);
+                
+                // Reset composite operation and alpha
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1.0;
+            }
+
+            function createGradient() {
+                const width = transformedCanvas.width;
+                const height = transformedCanvas.height;
+                
+                // Convert angle to radians and calculate start/end points
+                const angleRad = (angle * Math.PI) / 180;
+                const diagonal = Math.sqrt(width * width + height * height);
+                
+                const startX = width / 2 - Math.cos(angleRad) * diagonal / 2;
+                const startY = height / 2 - Math.sin(angleRad) * diagonal / 2;
+                const endX = width / 2 + Math.cos(angleRad) * diagonal / 2;
+                const endY = height / 2 + Math.sin(angleRad) * diagonal / 2;
+                
+                const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+                
+                // Set gradient colors based on selection
+                if (currentGradient === 'magenta-purple') {
+                    gradient.addColorStop(0, '#ff3366');
+                    gradient.addColorStop(1, '#ba24f0');
+                } else { // yellow-green
+                    gradient.addColorStop(0, '#ffd60a');
+                    gradient.addColorStop(1, '#016b39');
+                }
+                
+                return gradient;
+            }
+
+            function downloadImage() {
+                if (!originalImage.complete) return;
+                
+                const link = document.createElement('a');
+                link.download = 'gradient-transformed.png';
+                link.href = transformedCanvas.toDataURL('image/png');
+                link.click();
+            }
+
+            function capitalize(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+
+            // Add some subtle interactive elements for neuroaesthetics
+            document.addEventListener('mousemove', function(e) {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                
+                // Subtle background pattern shift based on mouse position
+                document.querySelector('.neural-pattern').style.backgroundPosition = 
+                    `${x * 100}% ${y * 100}%`;
+            });
+        });
+    </script>
+</body>
+</html>
